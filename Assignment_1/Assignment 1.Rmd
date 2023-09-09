@@ -1,0 +1,78 @@
+---
+title: "FML Assignment 1"
+output: html_document
+date: "2023-09-09"
+---
+
+```{r}
+Rsuragan <-read.csv("C:/Users/rupes/OneDrive/Desktop/Kent State University/FML/Assignment 1/Gaming review data.csv")
+```
+
+
+```{r}
+Rsuragan
+
+# 1
+summary(Rsuragan)
+
+# 2
+mean(Rsuragan$Reviews)
+
+
+median(Rsuragan$Reviews)
+
+
+min(Rsuragan$Reviews)
+
+
+max(Rsuragan$Reviews)
+
+
+sum(Rsuragan$Rating)
+
+
+sd(Rsuragan$Reviews)
+
+
+var(Rsuragan$Reviews)
+
+
+mode(Rsuragan$Reviews)
+
+
+str(Rsuragan$Genres)
+
+
+# 3 Descriptive Statistics for categorical variables
+
+table(Rsuragan$Genres)
+
+str(Rsuragan$App)
+
+
+# 4 Transforming the Variables
+
+log(Rsuragan$Rating)
+
+
+t <- Rsuragan$Reviews-mean(Rsuragan$Reviews)/sd(Rsuragan$Reviews)
+
+t
+```
+
+
+```{r}
+# 5 Plotting one variable
+
+hist(Rsuragan$Rating, main = "Histogram for Rating")
+
+
+
+# 6 Scatterplot
+
+plot(Rsuragan$Rating, Rsuragan$Reviews, main = "Scatterplot")
+```
+
+
+
+
