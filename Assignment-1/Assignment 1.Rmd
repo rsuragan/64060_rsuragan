@@ -1,0 +1,89 @@
+---
+title: "FML Assignment 1"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-09-10"
+---
+
+```{r}
+Gdata <-read.csv("C:/Users/rupes/OneDrive/Desktop/Kent State University/FML/Assignment 1/Gaming review data.csv")
+```
+
+
+```{r}
+Gdata
+```
+
+
+```{r}
+# 1
+summary(Gdata)
+
+# 2
+mean(Gdata$Rating)
+
+
+median(Gdata$Rating)
+
+
+min(Gdata$Rating)
+
+
+
+max(Gdata$Rating)
+
+
+
+sum(Gdata$Rating)
+
+
+sd(Gdata$Reviews)
+
+
+
+var(Gdata$Rating)
+
+
+
+str(Gdata$Genres)
+```
+
+
+```{r}
+# 3 Descriptive Statistics for the selection of quantitative and categorical variables
+
+table(Gdata$App)
+
+
+
+str(Gdata$App)
+```
+
+
+```{r}
+# 4 Transforming the Variables
+
+log(Gdata$Rating)
+
+
+t <- Gdata$Rating-mean(Gdata$Rating)/sd(Gdata$Rating)
+
+t
+```
+
+
+```{r}
+# 5 Plotting one variable
+
+hist(Gdata$Rating, main = "Histogram for Ratings")
+
+
+# 6 Scatterplot
+
+plot(Gdata$Rating, Gdata$Reviews, main = "Scatterplot")
+```
+
+
+
+
