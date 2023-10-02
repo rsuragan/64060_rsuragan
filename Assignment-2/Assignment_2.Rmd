@@ -1,0 +1,283 @@
+---
+title: "Assignment_2"
+author: "Rupesh_Suragani"
+date: "2023-10-01"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+#Directions of the problem
+Universal bank is a young bank growing rapidly in terms of overall customer acquisition. The majority of these customers are liability customers (depositors) with varying sizes of relationship with the bank.
+
+The customer base of asset customers (borrowers) is quite small, and the bank is interested in expanding this base rapidly in more loan business. In particular, it wants to explore ways of converting its liability customers to personal loan customers.
+
+A campaign that the bank ran last year for liability customers showed a healthy conversion rate of over 9% success. This has encouraged the retail marketing department to devise smarter campaigns with better target marketing. The goal is to use k-NN to predict whether a new customer will accept a loan offer. This will serve as the basis for the design of a new campaign.
+
+Partition the data into training (60%) and validation (40%) sets.
+
+#Data Import and Cleaning
+
+#Load the libraries CLASS, CARET, e1071
+```{r}
+library(class)
+library(caret)
+library(e1071)
+```
+
+#Import and read the CSV data
+```{r }
+ubank <- read.csv("C:/Users/rupes/OneDrive/Desktop/Kent State University/FML/Assignment 2/UniversalBank.csv")
+
+dim(ubank)
+
+# Here the t function creates a transpose of the data frame.
+t(t(names(ubank))) 
+```
+
+#Drop ID and ZIP
+```{r}
+ubank <- ubank[,-c(1,5)]
+```
+
+#Education is considered as a categorical predictor to transform Since, it is with more than two categories and has to be categorized into dummy variables.
+```{r}
+ubank$Education <- as.factor(ubank$Education)
+
+# Education is converted to Dummy Variables
+
+groups <- dummyVars(~., data = ubank)
+
+ubank_m <- as.data.frame(predict(groups,ubank))
+```
+
+
+```{r}
+# To ensure that we get the same sample if we rerun the code, use set.seed() function
+
+set.seed(1)  
+
+# Now, the data is partitioned into training and validation sets
+train_set <- sample(row.names(ubank_m), 0.6*dim(ubank_m)[1])
+
+valid_set <- setdiff(row.names(ubank_m), train_set)  
+
+train_data <- ubank_m[train_set,]
+
+valid_data <- ubank_m[valid_set,]
+
+t(t(names(train_data)))
+
+```
+
+#Now, let us normalize the data
+```{r}
+train_norm <- train_data[,-10] 
+
+valid_norm <- valid_data[,-10]
+
+norm_values <- preProcess(train_data[, -10], method=c("center", "scale"))
+
+train_norm <- predict(norm_values, train_data[, -10])
+
+valid_norm <- predict(norm_values, valid_data[, -10])
+```
+
+#Consider the following customer:
+```{r}
+
+new_customer <- data.frame(
+  Age = 40,
+  Experience = 10,
+  Income = 84,
+  Family = 2,
+  CCAvg = 2,
+  Education.1 = 0,
+  Education.2 = 1,
+  Education.3 = 0,
+  Mortgage = 0,
+  Securities.Account = 0,
+  CD.Account = 0,
+  Online = 1,
+  CreditCard = 1
+)
+
+# Normalizing the new customer
+
+new_cust_norm <- predict(norm_values, new_customer)
+
+```
+
+#1. Performing K-NN classification
+```{r}
+
+knn_pred1 <- class::knn(train = train_norm, 
+                       test = new_cust_norm, 
+                       cl = train_data$Personal.Loan, k = 1)
+knn_pred1
+
+```
+#2. For calculating the choice of k that balances between over fitting and ignoring the predictor information, 
+
+i)Calculate the accuracy for each value of K 
+
+ii)set the range of K values to consider
+
+```{r}
+accuracy <- data.frame(k = seq(1, 15, 1), overallaccuracy = rep(0, 15))
+
+for(i in 1:15) {
+  knn_pred <- class::knn(train = train_norm, 
+                         test = valid_norm, 
+                         cl = train_data$Personal.Loan, k = i)
+  
+  accuracy[i, 2] <- confusionMatrix(knn_pred, 
+     as.factor(valid_data$Personal.Loan),positive = "1")$overall[1]
+}
+
+which(accuracy[,2] == max(accuracy[,2])) 
+
+plot(accuracy$k,accuracy$overallaccuracy, xlab = "k", ylab = "overall accuracy", main = "Plotting overall accuracy against accuracy", pch = 20, col = "red")
+
+```
+
+#3. The confusion matrix for the validation data that results from using the best k, which is 3.
+```{r}
+knn_pred2 <- class::knn(train = train_norm, 
+                         test = valid_norm, 
+                         cl = train_data$Personal.Loan, k = 3)
+knn_pred2
+
+confusionMatrix(knn_pred2, as.factor(valid_data$Personal.Loan), positive = "1")
+```
+
+#4. Below is the data of the new customer which is again classified using the best k (3)
+```{r}
+new_customer1 <- data.frame(
+  Age = 40,
+  Experience = 10,
+  Income = 84,
+  Family = 2,
+  CCAvg = 2,
+  Education.1 = 0,
+  Education.2 = 1,
+  Education.3 = 0,
+  Mortgage = 0,
+  Securities.Account = 0,
+  CD.Account = 0,
+  Online = 1,
+  CreditCard = 1
+)
+
+new_cust_norm1 <- predict(norm_values, new_customer1)
+
+knn_pred3 <- class::knn(train = train_norm, 
+                       test = new_cust_norm1, 
+                       cl = train_data$Personal.Loan, k = 3)
+knn_pred3
+
+
+```
+#5. Repartition the data, this time into training, validation, and test sets (50% : 30% : 20%). Apply the k-NN method with the k chosen above. Comparision of the confusion matrix of the test set with that of the training and validation sets. 
+```{r}
+set.seed(2)
+
+# Splitting the data into training set(50%)
+
+train_set1 <- sample(row.names(ubank_m), 0.5*dim(ubank_m)[1])
+train_data1 <- ubank_m[train_set1,]
+
+valid_set1 <- setdiff(row.names(ubank_m), train_set1)
+valid_data1 <- ubank_m[valid_set1,]
+
+valid_set2 <- sample(row.names(valid_data1), 0.6*dim(valid_data1)[1]) # Note that 30% of the 100% is 60% of 50%
+valid_data2 <- valid_data1[valid_set2, ]
+
+
+test_set1 <- setdiff(row.names(valid_data1), valid_set2)
+test_data1 <- valid_data1[test_set1,]
+
+
+```
+
+```{r}
+# Normalizing the above data
+
+train_norm1 <- train_data1[, -10]
+
+valid_norm2 <- valid_data2[, -10]
+
+test_norm1 <- test_data1[, -10]
+
+norm_values1 <- preProcess(train_data1[, -10], method=c("center", "scale"))
+
+train_norm1 <- predict(norm_values1, train_data1[, -10])
+
+valid_norm2 <- predict(norm_values1, valid_data2[, -10])
+
+test_norm1 <- predict(norm_values1, test_data1[, -10])
+
+```
+
+#K-NN prediction for Training data (50%)
+```{r}
+knn_pred4 <- class::knn(train = train_norm1,
+                        test = train_norm1, 
+                        cl= train_data1$Personal.Loan, k=3)
+
+knn_pred4
+
+confusin_mat4 <- confusionMatrix(knn_pred4,as.factor(train_data1$Personal.Loan))
+
+cat("Matrix for Training data: ", "\n")
+confusin_mat4
+```
+#K-NN prediction for Vaidation data (30%)
+```{r}
+knn_pred5 <- class::knn(train = train_norm1,
+                        test = valid_norm2,
+                        cl = train_data1$Personal.Loan, k = 3)
+knn_pred5
+
+confusin_mat5 <- confusionMatrix(knn_pred5,as.factor(valid_data2$Personal.Loan))
+
+cat("Matrix for validation data: ", "\n")
+confusin_mat5
+```
+#K-NN prediction for Testing data (20%)
+```{r}
+knn_pred6 <- class::knn(train = train_norm1,
+                        test = test_norm1,
+                        cl = train_data1$Personal.Loan, k = 3)
+knn_pred6
+
+confusin_mat6 <- confusionMatrix(knn_pred6,as.factor(test_data1$Personal.Loan))
+
+cat("Matrix for Test data: ", "\n")
+confusin_mat6
+```
+
+#Comparsion of confusion Matrices and reasons for the differences
+The confusion matrix is a useful tool for evaluating the performance of a classification model. It shows the number of true positives, false positives, true negatives, and false negatives for each class.
+
+#Test set(test_norm1) Vs Training set(train_norm1)
+
+Accuracy: Here, the training set shows higher accuracy (0.9736) when compared to the test set (0.968).  
+
+Sensitivity: The sensitivity of training set (0.9978) is comparitively higher than that of test set (0.9957)
+
+Specificity: The Specificity of training set (0.7550) is also higher than that of test set (0.6216)
+
+precision: The precision of training set (0.9736) is slightly higher than that of the test set (0.9705)
+
+#Test set(train_norm1) Vs Validation Set(valid_norm2)
+
+Accuracy: The Accuracy of test set (0.968) is higher than that of the validation set(0.9527)
+
+Sensitivity: The sensitivity of test set (0.9957) is comparatively higher than that of validation set (0.9948)
+
+Specificity: The Specificity of test set (0.6216) is also higher than that of validation set (0.5924)
+
+precision: The precision of test set (0.9705) is slightly higher than that of the validation set (0.9543)
+
+Reason: At K=1, the KNN tends to closely follow the training data and thus shows a high training values. However, in comparison, the test data values are quite low. And also, if the model's accuracy on the testing data is lower than the training or validation accuracy, it usually indicates that there are meaningful differences between the kind of data which trained the model on and the testing data which is provided for evaluation.
