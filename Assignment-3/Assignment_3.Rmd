@@ -1,0 +1,336 @@
+---
+title: "Assignment_3"
+author: "Rupesh_Suragani"
+date: "2023-10-16"
+output:
+  word_document: default
+  html_document: default
+---
+
+# Summary
+# Questions - Answers
+
+1. Using the information in this dataset, if an accident has just been reported and no further information is available, what should the prediction be? (INJURY = Yes or No?) Why?
+A. From the above data we can conclude that  the accidents that are Injured is 21462 i.e. 50.88%.
+
+******
+
+2. Select the first 24 records in the dataset and look only at the response (INJURY) and the two predictors WEATHER_R and TRAF_CON_R. Create a pivot table that examines INJURY as a function of the two predictors for these 24 records. Use all three variables in the pivot table as rows/columns.
+
+2.1. Compute the exact Bayes conditional probabilities of an injury (INJURY = Yes) given the six possible   combinations of the predictors.
+A. Possible combinations of the predictors are
+Probability injury=yes when weather=1, traffic=0 is 0.6666667 
+Probability injury=yes when weather=2, traffic=0 is 0.1818182 
+Probability injury=yes when weather=1, traffic=1 is 0 
+Probability injury=yes when weather=2, traffic=1 is 0 
+Probability injury=yes when weather=1, traffic=2 is 0 
+Probability injury=yes when weather=2, traffic=2 is 1 
+
+******
+  
+2.2. Classify the 24 accidents using these probabilities and a cutoff of 0.5.
+A. Out of 24 rows there are 5 rows that the actual values of Injury from the dataset that does not matches with the predicted values.
+A.  Quantitative predictions- 
+ 0.6666667 0.1818182 0.0000000 0.0000000 0.6666667 0.1818182 0.1818182 0.6666667 0.1818182 0.1818182 0.1818182 0.0000000 0.6666667 0.6666667 0.6666667 0.6666667 0.1818182 0.1818182 0.1818182 0.1818182 0.6666667 0.6666667 1.0000000 0.1818182
+ Qualitative Predictions-
+ "yes" "no"  "no"  "no"  "yes" "no"  "no"  "yes" "no"  "no"  "no"  "no"  "yes" "yes" "yes" "yes"
+ "no"  "no"  "no"  "no"  "yes" "yes" "yes" "no"
+
+******
+
+2.3. Compute manually the naive Bayes conditional probability of an injury given WEATHER_R = 1 and TRAF_CON_R  = 1
+A. The naive Bayes conditional probability of an injury given WEATHER_R = 1 and TRAF_CON_R = 1 is '0', 
+
+******
+
+2(4) Run a naive Bayes classifier on the 24 records and two predictors. Check the model output to obtain probabilities and classifications for all 24 records. Compare this to the exact Bayes classification. Are the resulting classifications equivalent? Is the ranking (= ordering) of observations equivalent?
+
+A. By the two predictions from bayes and naiveBayes theorems and taking the cutoff value 0.4 for the naiveBayes, it is clear that the two predictions are almost same with slight difference for the 24 rows that we have predicted.
+
+******
+
+3.Let us now return to the entire dataset. Partition the data into training (60%) and validation (40%). 
+3(1) Run a naive Bayes classifier on the complete training set with the relevant predictors (and INJURY as the response). Note that all predictors are categorical. Show the confusion matrix.
+A.
+           Reference
+Prediction   no  yes
+       no  3203 5016
+       yes 2862 5793, Accuracy = 0.533
+       
+
+
+******
+
+3(2) What is the overall error of the validation set?
+A. The overall error of validation set is 0.466
+  
+************
+
+## Problem Statement
+
+The file accidentsFull.csv contains information on 42,183 actual automobile accidents in 2001 in the United States that involved one of three levels of injury: NO INJURY, INJURY, or FATALITY. For each accident, additional information is recorded, such as day of week, weather conditions, and road type. A firm might be interested in developing a system for quickly classifying the severity of an accident based on initial reports and associated data in the system (some of which rely on GPS-assisted reporting).
+
+Our goal here is to predict whether an accident just reported will involve an injury (MAX_SEV_IR = 1 or 2) or will not (MAX_SEV_IR = 0). For this purpose, create a dummy variable called INJURY that takes the value “yes” if MAX_SEV_IR = 1 or 2, and otherwise “no.”
+
+************
+# Data Import And Cleaning
+
+Load the Required Libraries
+```{r}
+library(caret)
+library(e1071)
+```
+
+data import which was in .csv format
+```{r}
+accidents_data <- read.csv("C:\\Users\\rupes\\OneDrive\\Desktop\\Kent State University\\FML\\Assignment 3\\accidentsFull.csv")
+
+dim(accidents_data)
+```
+
+Create a Dummy variable "INJURY"
+```{r}
+# create a new variable INJURY with "yes" or "no" by using the column MAX_SEV_IR
+accidents_data$INJURY = ifelse(accidents_data$MAX_SEV_IR > 0, "yes", "no")
+```
+
+## Questions
+1. Using the information in this dataset, if an accident has just been reported and no further information is available, what should the prediction be? (INJURY = Yes or No?) Why?
+```{r}
+# Accidents that are not Injured
+accidents_I_N <- sum(accidents_data$INJURY == "no")
+
+
+cat("No.of Accidents that are not Injured are", accidents_I_N,"\n")
+
+# Accidents that are Injured
+accidents_I_Y <- sum(accidents_data$INJURY == "yes")
+
+# Print the data
+cat("No.of Accidents that are Injured are", accidents_I_Y,"\n")
+```
+From the above data, the accidents that are Injured was 21462 and the accidents that are not injured was 20721. by using the above information, if an accident has just been reported and no further information is available,I can predict that the reported accident is "INJURED" that means INJURY = YES.
+
+Converting the variables to factors
+```{r}
+# Converting variables of the dataset to factors
+for (i in c(1:dim(accidents_data)[2])){
+  accidents_data[,i] <- as.factor(accidents_data[,i])
+}
+```
+
+*************
+
+2. Select the first 24 records in the dataset and look only at the response (INJURY) and the two predictors WEATHER_R and TRAF_CON_R. Create a pivot table that examines INJURY as a function of the two predictors for these 24 records. Use all three variables in the pivot table as rows/columns.
+2(1). Compute the exact Bayes conditional probabilities of an injury (INJURY = Yes) given the six possible combinations of the predictors.
+2(2). Classify the 24 accidents using these probabilities and a cutoff of 0.5.
+2(3). Compute manually the naive Bayes conditional probability of an injury given WEATHER_R = 1 and     TRAF_CON_R  =
+2(4). Run a naive Bayes classifier on the 24 records and two predictors. Check the model output to obtain   probabilities and classifications for all 24 records. Compare this to the exact Bayes classification. Are the resulting classifications equivalent? Is the ranking (= ordering) of observations equivalent?
+
+
+Create a dataframe by taking the first 24 columns and 3 columns "INJURY", "WEATHER_R", "TRAF_CON_R" from actual dataframe(accidents)
+```{r}
+# Create a dataframe by taking the first 24 rows
+accidentsdf24 <- accidents_data[1:24,c("INJURY", "WEATHER_R", "TRAF_CON_R")]
+dim(accidentsdf24)
+```
+create a pivot table from the above accidents24
+```{r}
+# Create a pivot table using ftable function
+data1 <- ftable(accidentsdf24) #ftable for creating pivot table
+data2 <- ftable(accidentsdf24[,-1]) #pivot table by dropping the first column
+
+# print the table
+data1
+data2
+```
+
+*****
+2.1 Compute the exact Bayes conditional probabilities of an injury (INJURY = Yes) given the six possible combinations of the predictors.
+
+Considering Injury = yes and getting six possible combinations of the predictors.
+```{r}
+#Probability when INJURY = YES
+y1 <- data1[3,1] / data2[1,1] #WEATHER = 1, TRAFFIC = 0
+y2 <- data1[4,1] / data2[2,1] #WEATHER = 2, TRAFFIC = 0
+y3 <- data1[3,2] / data2[1,2] #WEATHER = 1, TRAFFIC = 1
+y4 <- data1[4,2] / data2[2,2] #WEATHER = 2, TRAFFIC = 1
+y5 <- data1[3,3] / data2[1,3] #WEATHER = 1, TRAFFIC = 2
+y6 <- data1[4,3] / data2[2,3] #WEATHER = 2, TRAFFIC = 2
+
+cat("when INJURY = YES the probalities are", "\n")
+c(y1, y2, y3, y4, y5, y6)
+
+#PROBABILITY when INJURY = NO
+# Probability of INJURY = no, when 
+n1 <- data1[1,1] / data2[1,1] #WEATHER = 1, TRAFFIC = 0
+n2 <- data1[2,1] / data2[2,1] #WEATHER = 2, TRAFFIC = 0
+n3 <- data1[1,2] / data2[1,2] #WEATHER = 1, TRAFFIC = 1
+n4 <- data1[2,2] / data2[2,2] #WEATHER = 2, TRAFFIC = 1
+n5 <- data1[1,3] / data2[1,3] #WEATHER = 1, TRAFFIC = 2
+n6 <- data1[2,3] / data2[2,3] #WEATHER = 2, TRAFFIC = 2 
+
+
+cat("when INJURY = NO the probabilities are", "\n")
+c(n1, n2, n3, n4, n5, n6)
+```
+
+
+2(2) Classify the 24 accidents using these probabilities and a cutoff of 0.5.
+Assigning the probabilities to the each of the 24rows.
+```{r}
+# Considering the data from 0 to 24
+probability_injury <- rep(0,24)
+
+# use for loop considering iterations from 1 to 24
+for(i in 1:24){
+  if (accidentsdf24$WEATHER_R[i] == "1") {
+    
+      if (accidentsdf24$TRAF_CON_R[i]=="0"){
+        probability_injury[i] = y1
+      }
+    
+      else if (accidentsdf24$TRAF_CON_R[i]=="1") {
+        probability_injury[i] = y3
+      }
+      
+      else if (accidentsdf24$TRAF_CON_R[i]=="2") {
+        probability_injury[i] = y5
+      }
+    }
+    
+    else {
+      
+      if (accidentsdf24$TRAF_CON_R[i]=="0"){
+        probability_injury[i] = y2
+      }
+    
+      else if (accidentsdf24$TRAF_CON_R[i]=="1") {
+        probability_injury[i] = y4
+      }
+      
+      else if (accidentsdf24$TRAF_CON_R[i]=="2") {
+        probability_injury[i] = y6
+      }
+    }
+  }
+ 
+# Inserting the probabilities to the dataframe 
+accidentsdf24$probability_injury <- probability_injury
+
+# Classifying the accidents by means of cutoff value 0.5  
+accidentsdf24$pred_prob <- ifelse(accidentsdf24$probability_injury > 0.5, "yes", "no") 
+
+accidentsdf24
+```
+Out of 24 rows there are 5 rows that the actual values of Injury from the dataset that does not matches with the predicted values.
+row5: the actual Injury was No, but the predicted was Yes
+row6: the actual Injury was Yes, but the predicted was No
+row14: the actual Injury was No, but the predicted was Yes
+row21: the actual Injury was No, but the predicted was Yes
+row14: the actual Injury was Yes, but the predicted was No
+
+*******
+2.3 Compute manually the naive Bayes conditional probability of an injury given WEATHER_R = 1 and TRAF_CON_R = 1.
+Computing manually the naive Bayes conditional probability
+```{r}
+
+# Probability of getting Injured when WEATHER = 1
+PIy_W1 <-  (data1[3,1] + data1[3,2] + data1[3,3]) / (data1[3,1] + data1[3,2] + data1[3,3] + data1[4,1] + data1[4,2] + data1[4,3])
+PIy_W1
+
+# Probability of getting Injured when TRAF_CON_R = 1
+PIy_T1 <- (data1[3,2] + data1[4,2]) / (data1[3,1] + data1[3,2] + data1[3,3] + data1[4,1] + data1[4,2] + data1[4,3])
+
+# Probability of getting Injured
+PIy <- (data1[3,1] + data1[3,2] + data1[3,3] + data1[4,1] + data1[4,2] + data1[4,3])/24
+
+# Probability of not getting Injured when WEATHER_R = 1
+PIn_W1 <- (data1[1,1] + data1[1,2] + data1[1,3]) / (data1[1,1] + data1[1,2] + data1[1,3] + data1[2,1] + data1[2,2] + data1[2,3])
+
+# Probability of not getting Injured when TRAF_CON_R = 1
+PIn_T1 <- (data1[1,2] + data1[2,2]) / (data1[1,1] + data1[1,2] + data1[1,3] + data1[2,1] + data1[2,2] + data1[2,3])
+
+# Probability of not getting Injured
+PIn <- (data1[1,1] + data1[1,2] + data1[1,3] + data1[2,1] + data1[2,2] + data1[2,3])/24
+
+# Probability of getting Injured when WEATHER_R = 1 and TRAF_CON_R = 1
+PW1_T1 <- (PIy_W1 * PIy_T1 * PIy)/ ((PIy_W1 * PIy_T1 * PIy) + (PIn_W1 * PIn_T1 * PIn))
+
+cat("The naive Bayes conditional probability of an injury WHEN WEATHER = 1 and TRAFFIC = 1 is", PW1_T1)
+```
+
+2(4). Run a naive Bayes classifier on the 24 records and two predictors. Check the model output to obtain probabilities and classifications for all 24 records. Compare this to the exact Bayes classification. Are the resulting classifications equivalent? Is the ranking (= ordering) of observations equivalent?
+
+Training and Predicting the data
+```{r}
+# training the naiveBayes model by considering the predictors, Traffic and weather
+nb1 <- naiveBayes(INJURY ~ TRAF_CON_R + WEATHER_R, data = accidentsdf24)
+
+# Predicting the data using naiveBayes model
+nbT <- predict(nb1, newdata = accidentsdf24, type = "raw")
+
+# Inserting the newly predicted data to  accidents24 dataframe
+accidentsdf24$nbpred_probability <- nbT[,2] # Transfer the "Yes" nb prediction
+
+
+# Consider cutoff value 0.4 for naiveBayes predictions
+accidentsdf24$nbpred_probability_condition <- ifelse(accidentsdf24$nbpred_probability>0.4, "yes", "no") #if probability was greater than 0.4 the Injury will be yes
+accidentsdf24
+```
+
+```{r}
+#Loading the klaR package for Naive Bayes
+library(klaR) 
+
+Dset <- INJURY ~ TRAF_CON_R + WEATHER_R
+accidentsdf24$INJURY <- as.factor(accidentsdf24$INJURY)
+
+nb2 <- NaiveBayes(Dset,data = accidentsdf24)
+
+#predicting data
+predict(nb2, newdata = accidentsdf24[,c("INJURY", "WEATHER_R", "TRAF_CON_R")]) 
+
+```
+
+************
+
+3. Let us now return to the entire dataset. Partition the data into training (60%) and validation (40%). 
+3(1) Run a naive Bayes classifier on the complete training set with the relevant predictors (and INJURY as the response). Note that all predictors are categorical. Show the confusion matrix.
+
+Splitting the Data into 60% training and 40% validation.
+```{r}
+set.seed(1)
+
+train_set <- sample(row.names(accidents_data), 0.6*dim(accidents_data)[1]) # 60% training data
+valid_set <- setdiff(row.names(accidents_data), train_set) # 40% validation data
+
+train_data <- accidents_data[train_set,]
+valid_data <- accidents_data[valid_set,]
+
+#Defining what variables to be used
+
+variables <- c("INJURY", "HOUR_I_R", "ALIGN_I" ,"WRK_ZONE",  "WKDY_I_R",
+          "INT_HWY",  "LGTCON_I_R", "PROFIL_I_R", "SPD_LIM", "SUR_COND",
+          "TRAF_CON_R",   "TRAF_WAY",   "WEATHER_R")
+
+naive_prediction <- naiveBayes(INJURY~.,data = train_data[,variables])
+
+naive_prediction
+```
+
+3(2) What is the overall error of the validation set?
+```{r}
+confusn_Matrix =  confusionMatrix(valid_data$INJURY, predict(naive_prediction, valid_data[, variables]), positive = "yes")
+
+confusn_Matrix
+
+```
+#Overall error of the validation set
+```{r}
+overall_error_rate = 1 - confusn_Matrix$overall["Accuracy"]
+cat("The Overall Error is : ", overall_error_rate)
+
+```
+
+
